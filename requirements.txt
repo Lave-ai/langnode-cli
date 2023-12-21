@@ -2,4 +2,6 @@ bitsandbytes
 git+https://github.com/huggingface/transformers.git
 git+https://github.com/huggingface/peft.git
 git+https://github.com/huggingface/accelerate.git
-pysqlite3
+typer
+datasets
+scipy
