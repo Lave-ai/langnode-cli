@@ -1,21 +1,21 @@
 import os
-import sqlite3
 import typer
 import torch
-from transformers import BitsAndBytesConfig, AutoModelForCausalLM, AutoTokenizer, TextStreamer
-from peft import PeftModel, PeftModelForCausalLM
-from huggingface_hub import try_to_load_from_cache
-from transformers.utils.logging import set_verbosity_error, disable_progress_bar
 import warnings
+
+from transformers import BitsAndBytesConfig, AutoModelForCausalLM, AutoTokenizer, TextStreamer
+from transformers.utils.logging import set_verbosity_error, disable_progress_bar
+from huggingface_hub import try_to_load_from_cache
+
 from rich import print
 from rich.console import Console
 from rich.table import Table
 
 from utils import ascii_art
+import database as db
 
 
 app = typer.Typer()
-db_file = 'my_database.db'
 MODEL_MANAGER = None
 
 class ModelManager:
@@ -103,66 +103,23 @@ class ModelManager:
                 self.conversation_history.append({"role": "assistant", "content": assistant_response})
 
 
-def get_model_name_by_id(model_id: int) -> str:
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT name FROM llm_models WHERE id = ?', (model_id,))
-    row = cursor.fetchone()
-
-    conn.close()
-
-    if row:
-        return row[0]  # Return the model name
-    else:
-        raise ValueError
-
 
 @app.command()
 def run(base_model_id):
     global MODEL_MANAGER
-    name = get_model_name_by_id(base_model_id)
+    name = db.get_model_name_by_id(base_model_id)
     MODEL_MANAGER = ModelManager(name)
     MODEL_MANAGER.talk_to()
 
 
-def get_db_connection():
-    return sqlite3.connect(db_file)
-
-def initialize_db():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    # Create the table only if it doesn't exist
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS llm_models (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL
-    )
-    ''')
-    conn.commit()
-    conn.close()
-
-
 @app.command()
 def add_model(name: str):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO llm_models (name) VALUES (?)', 
-                   (name,))
-    conn.commit()
-    conn.close()
+    db.add_model(name)
     typer.echo(f"Model added: {name}")
-
-
 
 @app.command()
 def list_models():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute('SELECT id, name FROM llm_models')
-    rows = cursor.fetchall()
-    conn.close()
+    rows = db.list_models()
 
     console = Console()
     table = Table(show_header=True, header_style="bold magenta")
@@ -186,10 +143,9 @@ def list_models():
 
 
 if __name__ == "__main__":
-    initialize_db()
-
+    db.initialize_db()
     warnings.filterwarnings('ignore', category=FutureWarning)
 
     set_verbosity_error()
-    # disable_progress_bar()
+    disable_progress_bar()
     app()
