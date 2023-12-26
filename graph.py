@@ -60,6 +60,13 @@ class Graph:
 
         return stack  # Contains the vertices in topologically sorted order
 
+    def draw(self):
+        print("Graph Visualization:")
+        for edge in self.edges:
+            source_name = f"{edge.source.vertex_type.__name__}({edge.source.param_name})"
+            target_name = f"{edge.target.vertex_type.__name__}({edge.target.param_name})"
+            print(f"{source_name} -> {target_name}")
+
 
 def get_root_vertex(graph):
     """
@@ -128,3 +135,4 @@ if __name__ == "__main__":
         print("Built instance for vertex:", built_instance)
 
     print("Root vertex:", root_vertex.built_instance)
+    graph.draw()

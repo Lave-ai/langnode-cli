@@ -1,23 +1,15 @@
+from typing import Any
 import torch
 from rich import print
 from utils import ascii_art
-from transformers import BitsAndBytesConfig, AutoModelForCausalLM, AutoTokenizer, TextStreamer
+from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 
-class ModelManager:
-    def __init__(self, base_model_id):
-        print(f"[bold blue]{ascii_art}[/bold blue]")
-        print(f"[bold red]loading...{base_model_id}[/bold red]")
 
-        self.conversation_history = []
+class HfAutoModelForCasualLMWrapper:
+    def __getattr__(self, name):
+        return getattr(self.model, name)
 
-        # Configure BitsAndBytes
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_compute_dtype=torch.bfloat16
-        )
-
-        # Load model
+    def __init__(self, base_model_id, bnb_config) -> None:
         self.model = AutoModelForCausalLM.from_pretrained(
             base_model_id,
             quantization_config=bnb_config,
@@ -25,8 +17,24 @@ class ModelManager:
             use_auth_token=True
             )
 
-        # Load tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(base_model_id, add_bos_token=True, trust_remote_code=True)
+class HfAutoTokenizerWrapper:
+    def __getattr__(self, name):
+        return getattr(self.tokenizer, name)
+
+    def __init__(self, base_model_id) -> None:
+        self.tokenizer = AutoTokenizer.from_pretrained(base_model_id, 
+                                                       add_bos_token=True, 
+                                                       trust_remote_code=True)
+
+
+class ModelManager:
+    def __init__(self, model, tokenizer, base_model_id):
+        print(f"[bold blue]{ascii_art}[/bold blue]")
+        print(f"[bold red]loading...{base_model_id}[/bold red]")
+
+        self.conversation_history = []
+        self.model = model
+        self.tokenizer = tokenizer
 
     def unload_model(self):
         """

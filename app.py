@@ -10,18 +10,62 @@ from rich.console import Console
 from rich.table import Table
 
 import database as db
-from model_manager import ModelManager
+from model_manager import ModelManager, HfAutoModelForCasualLMWrapper, HfAutoTokenizerWrapper
+import torch
+from graph import Graph, Vertex, Edge, get_root_vertex
 
+from transformers import BitsAndBytesConfig
 
 app = typer.Typer()
 MODEL_MANAGER = None
+
+
+def build(base_model_id):
+    graph = Graph()
+
+    bnb_vertex = Vertex(BitsAndBytesConfig, "bnb_config", params={"load_in_4bit": True, 
+                                                                  "bnb_4bit_use_double_quant": True, 
+                                                                  "bnb_4bit_compute_dtype": torch.bfloat16})
+    model_vertex = Vertex(HfAutoModelForCasualLMWrapper, "model", params={"base_model_id": base_model_id})
+    tokenizer_vertex = Vertex(HfAutoTokenizerWrapper, "tokenizer", params={"base_model_id": base_model_id})
+    model_manager_vertex = Vertex(ModelManager, "", params={"base_model_id": base_model_id})
+
+    graph.add_vertex(bnb_vertex)
+    graph.add_vertex(model_vertex)
+    graph.add_vertex(tokenizer_vertex)
+    graph.add_vertex(model_manager_vertex)
+
+
+    graph.add_edge(bnb_vertex, model_vertex)
+    graph.add_edge(model_vertex, model_manager_vertex)
+    graph.add_edge(tokenizer_vertex, model_manager_vertex)
+
+    graph.draw()
+
+    sorted_vertices = graph.topological_sort()
+    print("Topologically sorted vertices:")
+    for v in sorted_vertices:
+        print(v.vertex_type, v.param_name)
+
+    for vertex in sorted_vertices:
+        print(vertex.parameters)
+        built_instance = vertex.build()
+        print("Built instance for vertex:", built_instance)
+
+    root_vertex = get_root_vertex(graph)
+    print("Root vertex:", root_vertex.built_instance)
+
+    return root_vertex.built_instance
+
+    
+
 
 
 @app.command()
 def run(base_model_id):
     global MODEL_MANAGER
     name = db.get_model_name_by_id(base_model_id)
-    MODEL_MANAGER = ModelManager(name)
+    MODEL_MANAGER = build(name)
     MODEL_MANAGER.talk_to()
 
 
