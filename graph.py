@@ -16,7 +16,14 @@ class Vertex:
         return self.built_instance
 
     def run(self):
-        pass
+        if not self.built_instance:
+            self.built_instance = self.vertex_type(**self.parameters)
+            result = self.built_instance()
+            for edge in self.edges:
+                if edge.source == self:
+                    edge.target.parameters.update({self.param_name: result})
+
+        return result
 
     def add_edge(self, edge):
         if edge not in self.edges:
@@ -102,24 +109,37 @@ class Car:
     def __str__(self):
         return f"Car: {self.brand.name} {self.model.name}"
 
+class Add3:
+    def __init__(self, number):
+        self.number = number
+
+    def __call__(self):
+        print(f"{self.number} + 3")
+        return self.number + 3
+
+class Multiply3:
+    def __init__(self, added_result):
+        self.added_result = added_result
+
+    def __call__(self):
+        print(f"{self.added_result} * 3")
+        return self.added_result * 3
+
 # Test Script
 if __name__ == "__main__":
     # Create a graph
     graph = Graph()
 
     # Create vertices
-    brand_vertex = Vertex(Brand, "brand", {"name": "Tesla"})
-    model_vertex = Vertex(Model, "model", {"name": "model Y"})
-    car_vertex = Vertex(Car, "car", {})
+    add3_vertex = Vertex(Add3, "added_result", {"number": 2})
+    multiply_vertex = Vertex(Multiply3, "multiply", {})
 
     # Add vertices to the graph
-    graph.add_vertex(brand_vertex)
-    graph.add_vertex(model_vertex)
-    graph.add_vertex(car_vertex)
+    graph.add_vertex(add3_vertex)
+    graph.add_vertex(multiply_vertex)
 
     # Connect vertices with edges (Brand to Car)
-    graph.add_edge(brand_vertex, car_vertex)
-    graph.add_edge(model_vertex, car_vertex)
+    graph.add_edge(add3_vertex, multiply_vertex)
 
     # Perform a topological sort
     sorted_vertices = graph.topological_sort()
@@ -134,8 +154,47 @@ if __name__ == "__main__":
     # Build the graph
     for vertex in sorted_vertices:
         print(vertex.parameters)
-        built_instance = vertex.build()
-        print("Built instance for vertex:", built_instance)
+        result = vertex.run()
+        print("result of vertex.run():", result)
 
     print("Root vertex:", root_vertex.built_instance)
     graph.draw()
+
+
+# # Test Script
+# if __name__ == "__main__":
+#     # Create a graph
+#     graph = Graph()
+
+#     # Create vertices
+#     brand_vertex = Vertex(Brand, "brand", {"name": "Tesla"})
+#     model_vertex = Vertex(Model, "model", {"name": "model Y"})
+#     car_vertex = Vertex(Car, "car", {})
+
+#     # Add vertices to the graph
+#     graph.add_vertex(brand_vertex)
+#     graph.add_vertex(model_vertex)
+#     graph.add_vertex(car_vertex)
+
+#     # Connect vertices with edges (Brand to Car)
+#     graph.add_edge(brand_vertex, car_vertex)
+#     graph.add_edge(model_vertex, car_vertex)
+
+#     # Perform a topological sort
+#     sorted_vertices = graph.topological_sort()
+#     print("Topologically sorted vertices:")
+#     for v in sorted_vertices:
+#         print(v.vertex_type, v.param_name)
+
+#     # Identify the root vertex
+#     root_vertex = get_root_vertex(graph)
+#     print("Root vertex:", root_vertex.vertex_type, root_vertex.param_name)
+
+#     # Build the graph
+#     for vertex in sorted_vertices:
+#         print(vertex.parameters)
+#         built_instance = vertex.build()
+#         print("Built instance for vertex:", built_instance)
+
+#     print("Root vertex:", root_vertex.built_instance)
+#     graph.draw()
