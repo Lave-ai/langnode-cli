@@ -15,6 +15,9 @@ class Vertex:
 
         return self.built_instance
 
+    def run(self):
+        pass
+
     def add_edge(self, edge):
         if edge not in self.edges:
             self.edges.append(edge)

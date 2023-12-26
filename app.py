@@ -1,7 +1,9 @@
 import os
+import torch
 import typer
 import warnings
 
+from transformers import BitsAndBytesConfig
 from transformers.utils.logging import set_verbosity_error, disable_progress_bar
 from huggingface_hub import try_to_load_from_cache
 
@@ -10,15 +12,12 @@ from rich.console import Console
 from rich.table import Table
 
 import database as db
-from model_manager import ModelManager, HfAutoModelForCasualLMWrapper, HfAutoTokenizerWrapper
-import torch
-from graph import Graph, Vertex, Edge, get_root_vertex
+from entities import ModelManager, HfAutoModelForCasualLMWrapper, HfAutoTokenizerWrapper
+from graph import Graph, Vertex, get_root_vertex
 
-from transformers import BitsAndBytesConfig
 
 app = typer.Typer()
 MODEL_MANAGER = None
-
 
 def build(base_model_id):
     graph = Graph()
@@ -34,7 +33,6 @@ def build(base_model_id):
     graph.add_vertex(model_vertex)
     graph.add_vertex(tokenizer_vertex)
     graph.add_vertex(model_manager_vertex)
-
 
     graph.add_edge(bnb_vertex, model_vertex)
     graph.add_edge(model_vertex, model_manager_vertex)
@@ -57,17 +55,12 @@ def build(base_model_id):
 
     return root_vertex.built_instance
 
-    
-
-
-
 @app.command()
 def run(base_model_id):
     global MODEL_MANAGER
     name = db.get_model_name_by_id(base_model_id)
     MODEL_MANAGER = build(name)
     MODEL_MANAGER.talk_to()
-
 
 @app.command()
 def add_model(name: str):
