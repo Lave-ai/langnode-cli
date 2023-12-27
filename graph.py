@@ -1,8 +1,7 @@
 class Vertex:
-    def __init__(self, id, vertex_type, param_name, params: dict):
+    def __init__(self, id, vertex_type, params: dict):
         self.id = id
         self.vertex_type = vertex_type
-        self.param_name = param_name
         self.parameters = params
         self.built_instance = None
         self.edges = []  # List to store connected edges
@@ -10,7 +9,7 @@ class Vertex:
     def _build(self):
         for edge in self.edges:
             if edge.source == self:
-                edge.target.parameters.update({self.param_name: self.built_instance})
+                edge.target.parameters.update({edge.target_param_name: self.built_instance})
 
         return self.built_instance
 
@@ -19,7 +18,7 @@ class Vertex:
         result = self.built_instance()
         for edge in self.edges:
             if edge.source == self:
-                edge.target.parameters.update({self.param_name: result})
+                edge.target.parameters.update({edge.target_param_name: result})
 
         return result
     
@@ -38,9 +37,10 @@ class Vertex:
 
 
 class Edge:
-    def __init__(self, source, target):
+    def __init__(self, source, target, target_param_name):
         self.source = source
         self.target = target
+        self.target_param_name = target_param_name
 
 
 class Graph:
@@ -58,12 +58,12 @@ class Graph:
                 return vertex
         return None
 
-    def add_edge(self, source_id, target_id):
+    def add_edge(self, source_id, target_id, target_param_name):
         source_vertex = self.find_vertex_by_id(source_id)
         target_vertex = self.find_vertex_by_id(target_id)
 
         if source_vertex and target_vertex:
-            edge = Edge(source_vertex, target_vertex)
+            edge = Edge(source_vertex, target_vertex, target_param_name)
             if edge not in self.edges:
                 self.edges.append(edge)
                 source_vertex.add_edge(edge)
@@ -90,9 +90,7 @@ class Graph:
     def draw(self):
         print("Graph Visualization:")
         for edge in self.edges:
-            source_name = f"{edge.source.vertex_type.__name__}({edge.source.param_name})"
-            target_name = f"{edge.target.vertex_type.__name__}({edge.target.param_name})"
-            print(f"{source_name} -> {target_name}")
+            print(f"{edge.source.vertex_type.__name__} --> {edge.target}.{edge.target_param_name}")
 
 
 def get_root_vertex(graph):
@@ -148,25 +146,25 @@ if __name__ == "__main__":
     graph = Graph()
 
     # Create vertices
-    add3_vertex = Vertex("add1", Add3, "added_result", {"number": 2})
-    multiply_vertex = Vertex("mul1", Multiply3, "multiply", {})
+    add3_vertex = Vertex("add1", Add3, {"number": 2})
+    multiply_vertex = Vertex("mul1", Multiply3, {})
 
     # Add vertices to the graph
     graph.add_vertex(add3_vertex)
     graph.add_vertex(multiply_vertex)
 
     # Connect vertices with edges (Brand to Car)
-    graph.add_edge("add1", "mul1")
+    graph.add_edge("add1", "mul1", "added_result",)
 
     # Perform a topological sort
     sorted_vertices = graph.topological_sort()
     print("Topologically sorted vertices:")
     for v in sorted_vertices:
-        print(v.vertex_type, v.param_name)
+        print(v.vertex_type)
 
     # Identify the root vertex
     root_vertex = get_root_vertex(graph)
-    print("Root vertex:", root_vertex.vertex_type, root_vertex.param_name)
+    print("Root vertex:", root_vertex.vertex_type)
 
     # Build the graph
     for vertex in sorted_vertices:
