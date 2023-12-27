@@ -1,29 +1,36 @@
 class Vertex:
-    def __init__(self, vertex_type, param_name, params: dict):
+    def __init__(self, id, vertex_type, param_name, params: dict):
+        self.id = id
         self.vertex_type = vertex_type
         self.param_name = param_name
         self.parameters = params
         self.built_instance = None
         self.edges = []  # List to store connected edges
 
-    def build(self):
-        if not self.built_instance:
-            self.built_instance = self.vertex_type(**self.parameters)
-            for edge in self.edges:
-                if edge.source == self:
-                    edge.target.parameters.update({self.param_name: self.built_instance})
+    def _build(self):
+        for edge in self.edges:
+            if edge.source == self:
+                edge.target.parameters.update({self.param_name: self.built_instance})
 
         return self.built_instance
 
-    def run(self):
-        if not self.built_instance:
-            self.built_instance = self.vertex_type(**self.parameters)
-            result = self.built_instance()
-            for edge in self.edges:
-                if edge.source == self:
-                    edge.target.parameters.update({self.param_name: result})
+
+    def _run(self):
+        result = self.built_instance()
+        for edge in self.edges:
+            if edge.source == self:
+                edge.target.parameters.update({self.param_name: result})
 
         return result
+    
+    def run(self):
+        self.built_instance = self.vertex_type(**self.parameters)
+        if callable(self.built_instance):
+            print(f"{self.built_instance} is callable")
+            return self._run()
+        else:
+            print(f"{self.built_instance} is not callable")
+            return self._build()
 
     def add_edge(self, edge):
         if edge not in self.edges:
@@ -45,12 +52,22 @@ class Graph:
         if vertex not in self.vertices:
             self.vertices.append(vertex)
 
-    def add_edge(self, source, target):
-        edge = Edge(source, target)
-        if edge not in self.edges:
-            self.edges.append(edge)
-            source.add_edge(edge)  # Add edge to source vertex
-            target.add_edge(edge)  # Add edge to target vertex
+    def find_vertex_by_id(self, vertex_id):
+        for vertex in self.vertices:
+            if vertex.id == vertex_id:
+                return vertex
+        return None
+
+    def add_edge(self, source_id, target_id):
+        source_vertex = self.find_vertex_by_id(source_id)
+        target_vertex = self.find_vertex_by_id(target_id)
+
+        if source_vertex and target_vertex:
+            edge = Edge(source_vertex, target_vertex)
+            if edge not in self.edges:
+                self.edges.append(edge)
+                source_vertex.add_edge(edge)
+                target_vertex.add_edge(edge)
 
     def topological_sort_util(self, vertex, visited, stack):
         visited.add(vertex)
@@ -131,15 +148,15 @@ if __name__ == "__main__":
     graph = Graph()
 
     # Create vertices
-    add3_vertex = Vertex(Add3, "added_result", {"number": 2})
-    multiply_vertex = Vertex(Multiply3, "multiply", {})
+    add3_vertex = Vertex("add1", Add3, "added_result", {"number": 2})
+    multiply_vertex = Vertex("mul1", Multiply3, "multiply", {})
 
     # Add vertices to the graph
     graph.add_vertex(add3_vertex)
     graph.add_vertex(multiply_vertex)
 
     # Connect vertices with edges (Brand to Car)
-    graph.add_edge(add3_vertex, multiply_vertex)
+    graph.add_edge("add1", "mul1")
 
     # Perform a topological sort
     sorted_vertices = graph.topological_sort()

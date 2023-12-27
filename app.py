@@ -22,21 +22,21 @@ MODEL_MANAGER = None
 def build(base_model_id):
     graph = Graph()
 
-    bnb_vertex = Vertex(BitsAndBytesConfig, "bnb_config", params={"load_in_4bit": True, 
+    bnb_vertex = Vertex('bnb1', BitsAndBytesConfig, "bnb_config", params={"load_in_4bit": True, 
                                                                   "bnb_4bit_use_double_quant": True, 
                                                                   "bnb_4bit_compute_dtype": torch.bfloat16})
-    model_vertex = Vertex(HfAutoModelForCasualLMWrapper, "model", params={"base_model_id": base_model_id})
-    tokenizer_vertex = Vertex(HfAutoTokenizerWrapper, "tokenizer", params={"base_model_id": base_model_id})
-    model_manager_vertex = Vertex(ModelManager, "", params={"base_model_id": base_model_id})
+    model_vertex = Vertex('model1', HfAutoModelForCasualLMWrapper, "model", params={"base_model_id": base_model_id})
+    tokenizer_vertex = Vertex('tok1', HfAutoTokenizerWrapper, "tokenizer", params={"base_model_id": base_model_id})
+    model_manager_vertex = Vertex('mmv1', ModelManager, "", params={"base_model_id": base_model_id})
 
     graph.add_vertex(bnb_vertex)
     graph.add_vertex(model_vertex)
     graph.add_vertex(tokenizer_vertex)
     graph.add_vertex(model_manager_vertex)
 
-    graph.add_edge(bnb_vertex, model_vertex)
-    graph.add_edge(model_vertex, model_manager_vertex)
-    graph.add_edge(tokenizer_vertex, model_manager_vertex)
+    graph.add_edge('bnb1', 'model1')
+    graph.add_edge('model1', 'mmv1')
+    graph.add_edge('tok1', 'mmv1')
 
     graph.draw()
 
@@ -47,7 +47,7 @@ def build(base_model_id):
 
     for vertex in sorted_vertices:
         print(vertex.parameters)
-        built_instance = vertex.build()
+        built_instance = vertex.run()
         print("Built instance for vertex:", built_instance)
 
     root_vertex = get_root_vertex(graph)
