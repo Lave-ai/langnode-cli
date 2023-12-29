@@ -1,0 +1,51 @@
+{
+    "id": "graph_id",
+    "name": "graph_name",
+    "data": {
+        "nodes": [
+            {
+                "id": "bnb1",
+                "node_type": "HfBitsAndBytesConfig",
+                "properties": {
+                    "load_in": "4bit"
+                }
+            },
+            {
+                "id": "model1",
+                "node_type": "HfAutoModelForCasualLM",
+                "properties": {
+                    "base_model_id": "mistralai/Mistral-7B-Instruct-v0.2"
+                }
+            },
+            {
+                "id": "tok1",
+                "node_type": "HfAutoTokenizer",
+                "properties": {
+                    "base_model_id": "mistralai/Mistral-7B-Instruct-v0.2"
+                }
+            },
+            {
+                "id": "tg1",
+                "node_type": "TextGenerator",
+                "properties": {}
+            }
+        ],
+        "edges": [
+            {
+                "source_id": "bnb1",
+                "target_id": "model1",
+                "target_param_name": "quantization_config"
+            },
+            {
+                "source_id": "model1",
+                "target_id": "tg1",
+                "target_param_name": "model"
+            },
+            {
+                "source_id": "tok1",
+                "target_id": "tg1",
+                "target_param_name": "tokenizer"
+            }
+        ]
+    }
+}

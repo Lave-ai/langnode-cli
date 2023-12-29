@@ -16,13 +16,37 @@ from pipeline import Pipeline, Node
 app = typer.Typer()
 MODEL_MANAGER = None
 
+def build_from_dict():
+    import json
+    with open('template.json') as f:
+        parsed_json = json.load(f)
+    pipe_line = Pipeline()
+
+    nodes = [Node(**node) for node in parsed_json['data']['nodes']]
+    for node in nodes:
+        pipe_line.add_node(node)
+
+    for edge in parsed_json['data']['edges']:
+        pipe_line.add_edge(**edge)
+
+    pipe_line.draw()
+
+    sorted_nodes = pipe_line.topological_sort()
+    print("Topologically sorted nodes:")
+    for node in sorted_nodes:
+        print(node.wrapper_class)
+
+    for node in sorted_nodes:
+        node.run()
+
+
 def build(base_model_id):
     pipe_line = Pipeline()
 
     bnb_node = Node('bnb1', "HfBitsAndBytesConfig",  properties={"load_in": "4bit"})
     model_node = Node('model1', "HfAutoModelForCasualLM",  properties={"base_model_id": base_model_id})
     tokenizer_node = Node('tok1', "HfAutoTokenizer",  properties={"base_model_id": base_model_id})
-    text_generator_node = Node('mmv1', "TextGenerator", properties={})
+    text_generator_node = Node('tg1', "TextGenerator", properties={})
 
     pipe_line.add_node(bnb_node)
     pipe_line.add_node(model_node)
@@ -30,8 +54,8 @@ def build(base_model_id):
     pipe_line.add_node(text_generator_node)
 
     pipe_line.add_edge('bnb1', 'model1', "quantization_config",)
-    pipe_line.add_edge('model1', 'mmv1', "model")
-    pipe_line.add_edge('tok1', 'mmv1', "tokenizer",)
+    pipe_line.add_edge('model1', 'tg1', "model")
+    pipe_line.add_edge('tok1', 'tg1', "tokenizer",)
 
     pipe_line.draw()
 
@@ -48,7 +72,8 @@ def build(base_model_id):
 def run(base_model_id):
     global MODEL_MANAGER
     name = db.get_model_name_by_id(base_model_id)
-    MODEL_MANAGER = build(name)
+    # MODEL_MANAGER = build(name)
+    build_from_dict()
 
 @app.command()
 def add_model(name: str):
