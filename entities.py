@@ -1,36 +1,14 @@
-from typing import Any
 import torch
+
+
 from rich import print
 from utils import ascii_art
 from transformers import AutoModelForCausalLM, AutoTokenizer, TextStreamer
 
-
-class HfAutoModelForCasualLMWrapper:
-    def __getattr__(self, name):
-        return getattr(self.model, name)
-
-    def __init__(self, base_model_id, bnb_config) -> None:
-        self.model = AutoModelForCausalLM.from_pretrained(
-            base_model_id,
-            quantization_config=bnb_config,
-            trust_remote_code=True,
-            use_auth_token=True
-            )
-
-class HfAutoTokenizerWrapper:
-    def __getattr__(self, name):
-        return getattr(self.tokenizer, name)
-
-    def __init__(self, base_model_id) -> None:
-        self.tokenizer = AutoTokenizer.from_pretrained(base_model_id, 
-                                                       add_bos_token=True, 
-                                                       trust_remote_code=True)
-
-
-class ModelManager:
-    def __init__(self, model, tokenizer, base_model_id):
-        print(f"[bold blue]{ascii_art}[/bold blue]")
-        print(f"[bold red]loading...{base_model_id}[/bold red]")
+class TextGenerator:
+    def __init__(self, 
+                 model: AutoModelForCausalLM, 
+                 tokenizer: AutoTokenizer):
 
         self.conversation_history = []
         self.model = model
