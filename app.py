@@ -46,7 +46,12 @@ def build(base_model_id):
     bnb_node = Node('bnb1', "HfBitsAndBytesConfig",  properties={"load_in": "4bit"})
     model_node = Node('model1', "HfAutoModelForCasualLM",  properties={"base_model_id": base_model_id})
     tokenizer_node = Node('tok1', "HfAutoTokenizer",  properties={"base_model_id": base_model_id})
-    text_generator_node = Node('tg1', "TextGenerator", properties={})
+    text_generator_node = Node('tg1', "HfModelGenerator", properties={
+        "temperature": 0.0,
+        "max_new_tokens": 1024,
+        "repetition_penalty": 0.0,
+        "prompt": "hello my dear"
+    })
 
     pipe_line.add_node(bnb_node)
     pipe_line.add_node(model_node)
