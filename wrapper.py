@@ -2,6 +2,75 @@ from typing import Any
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from entities import TextGenerator
 import google.generativeai as genai
+from openai import OpenAI
+
+class OpenaiCompeletionWrapper:
+    def __init__(self, client, model_name, max_tokens, temperature, prompt) -> None:
+        self.client = client
+        self.model_name = model_name
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.prompt = prompt
+
+    def __repr__(self) -> str:
+        return __class__.__name__.replace("Wrapper", "")
+
+    def __call__(self) -> Any:
+        chat_completion = self.client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": self.prompt,
+                }
+            ],
+            model=self.model_name,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens
+        )
+        print(chat_completion.choices[0].message.content)
+        return chat_completion.choices[0].message.content
+        
+    def build(self):
+        pass
+
+    def definition(self):
+        return {
+            "type": self.__repr__,
+            "fields": [
+                {"name": "client", "type": "OpenaiClient", "required": True, "default": None, "is_property": False},
+                {"name": "model_name", "type": "str", "required": True, "default": None, "is_property": True},
+                {"name": "max_tokens", "type": "int", "required": False, "default": 1024, "is_property": True},
+                {"name": "temperature", "type": "float", "required": False, "default": 0.0, "is_property": True},
+                {"name": "prompt", "type": "str", "required": True, "default": None, "is_property": True},
+            ]
+        }
+
+    @classmethod
+    def from_definition(cls, client, model_name, max_tokens, temperature, prompt):
+        return cls(client.built_instance, model_name, max_tokens, temperature, prompt)
+
+class OpenaiClientWrapper:
+    def __init__(self, api_key) -> None:
+        self.api_key = api_key
+
+    def __repr__(self) -> str:
+        return __class__.__name__.replace("Wrapper", "")
+
+    def build(self):
+        self.built_instance = OpenAI(
+            api_key=self.api_key)
+
+    def definition(self):
+        return {
+            "type": self.__repr__,
+            "fields": [
+                {"name": "api_key", "type": "str", "required": True, "default": None, "is_property": True},
+            ]
+        }
+
+    @classmethod
+    def from_definition(cls, api_key):
+        return cls(api_key)
 
 class GeminiGeneratorWrapper:
     def __init__(self, model, max_output_tokens, temperature, prompt) -> None:
