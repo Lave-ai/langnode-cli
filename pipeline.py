@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import copy
 import wrapper
 
 class Node:
@@ -7,7 +7,7 @@ class Node:
         self.wrapper_class = getattr(wrapper, node_type + "Wrapper") 
         self.wrapper = None
         self.parameters = {**properties}
-        # self.previous_parameters = None
+        self.previous_parameters = None
         self.edges = []
     
     def __repr__(self) -> str:
@@ -19,11 +19,11 @@ class Node:
                 edge.target.parameters.update({edge.target_param_name: value})
 
     def run(self):
-        # if self.wrapper is None or self.previous_parameters != self.parameters:
-        self.wrapper = self.wrapper_class.from_definition(**self.parameters)
-        self.wrapper.build()
+        if self.wrapper is None or self.previous_parameters != self.parameters:
+            self.wrapper = self.wrapper_class(**self.parameters)
+            self.wrapper.build()
 
-        # self.previous_parameters = deepcopy(self.parameters)
+        self.previous_parameters = copy(self.parameters)
 
         if callable(self.wrapper):
             result = self.wrapper()

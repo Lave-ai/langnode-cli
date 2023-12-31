@@ -11,6 +11,7 @@ from rich.table import Table
 
 import database as db
 from pipeline import Pipeline, Node
+from wrapper import HfBitsAndBytesConfigWrapper
 
 
 app = typer.Typer()
@@ -37,6 +38,17 @@ def build_from_dict():
         print(node.wrapper_class)
 
     for node in sorted_nodes:
+        print(node.wrapper_class)
+        node.run()
+
+    for node in sorted_nodes:
+        print(node.wrapper_class)
+        node.run()
+
+    for node in sorted_nodes:
+        print(node.wrapper_class)
+        if node.wrapper_class is HfBitsAndBytesConfigWrapper:
+            node.parameters["load_in"] = "8bit"
         node.run()
 
 

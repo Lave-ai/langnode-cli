@@ -4,19 +4,30 @@ from entities import TextGenerator
 import google.generativeai as genai
 from openai import OpenAI
 
-class OpenaiCompeletionWrapper:
-    def __init__(self, client, model_name, max_tokens, temperature, prompt) -> None:
+class WrapperMixin:
+    def __repr__(self) -> str:
+        return __class__.__name__.replace("Wrapper", "")
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+        self_dict_filtered = {key: self.__dict__[key] for key in self.keys_to_compare}
+        other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
+
+        return self_dict_filtered == other_dict_filtered
+
+
+class OpenaiCompeletionWrapper(WrapperMixin):
+    def __init__(self, client, *, model_name, max_tokens, temperature, prompt) -> None:
+        self.keys_to_compare = ["client", "model_name", "max_tokens", "temperature", "prompt"]
         self.client = client
         self.model_name = model_name
         self.max_tokens = max_tokens
         self.temperature = temperature
         self.prompt = prompt
 
-    def __repr__(self) -> str:
-        return __class__.__name__.replace("Wrapper", "")
-
     def __call__(self) -> Any:
-        chat_completion = self.client.chat.completions.create(
+        chat_completion = self.client.built_instance.chat.completions.create(
             messages=[
                 {
                     "role": "user",
@@ -45,16 +56,11 @@ class OpenaiCompeletionWrapper:
             ]
         }
 
-    @classmethod
-    def from_definition(cls, client, model_name, max_tokens, temperature, prompt):
-        return cls(client.built_instance, model_name, max_tokens, temperature, prompt)
 
-class OpenaiClientWrapper:
-    def __init__(self, api_key) -> None:
+class OpenaiClientWrapper(WrapperMixin):
+    def __init__(self, *, api_key) -> None:
+        self.keys_to_compare = ["api_key"]
         self.api_key = api_key
-
-    def __repr__(self) -> str:
-        return __class__.__name__.replace("Wrapper", "")
 
     def build(self):
         self.built_instance = OpenAI(
@@ -68,22 +74,17 @@ class OpenaiClientWrapper:
             ]
         }
 
-    @classmethod
-    def from_definition(cls, api_key):
-        return cls(api_key)
 
-class GeminiGeneratorWrapper:
-    def __init__(self, model, max_output_tokens, temperature, prompt) -> None:
+class GeminiGeneratorWrapper(WrapperMixin):
+    def __init__(self, model, *, max_output_tokens, temperature, prompt) -> None:
+        self.keys_to_compare = ["model", "max_output_tokens", "temperature", "prompt"]
         self.model = model
         self.max_output_tokens = max_output_tokens
         self.temperature = temperature
         self.prompt = prompt
 
-    def __repr__(self) -> str:
-        return __class__.__name__.replace("Wrapper", "")
-
     def __call__(self) -> Any:
-        responses = self.model.generate_content(self.prompt, 
+        responses = self.model.built_instance.generate_content(self.prompt, 
         generation_config={
             "max_output_tokens": self.max_output_tokens,
             "temperature": self.temperature,
@@ -105,18 +106,12 @@ class GeminiGeneratorWrapper:
             ]
         }
 
-    @classmethod
-    def from_definition(cls, model, max_output_tokens, temperature, prompt):
-        return cls(model.built_instance, max_output_tokens, temperature, prompt)
 
-
-class GeminiModelWrapper:
-    def __init__(self, model_name, api_key) -> None:
+class GeminiModelWrapper(WrapperMixin):
+    def __init__(self, *, model_name, api_key) -> None:
+        self.keys_to_compare = ["model_name", "api_key"]
         self.model_name = model_name
         self.api_key = api_key
-
-    def __repr__(self) -> str:
-        return __class__.__name__.replace("Wrapper", "")
 
     def build(self):
         genai.configure(api_key=self.api_key)
@@ -131,30 +126,18 @@ class GeminiModelWrapper:
             ]
         }
 
-    @classmethod
-    def from_definition(cls, model_name, api_key):
-        return cls(model_name, api_key)
 
-
-class HfBitsAndBytesConfigWrapper:
-    def __init__(self, load_in, **kwargs) -> None:
+class HfBitsAndBytesConfigWrapper(WrapperMixin):
+    def __init__(self, *, load_in) -> None:
+        self.keys_to_compare = ["load_in"]
         self.load_in = load_in
-        self.kwargs = kwargs
-
-    def __eq__(self, other):
-        if not isinstance(other, HfBitsAndBytesConfigWrapper):
-            return NotImplemented
-        return (self.loadin == other.load_in) and (self.kwargs == other.kwargs)
-
-    def __repr__(self) -> str:
-        return __class__.__name__.replace("Wrapper", "")
 
     def build(self):
         if self.load_in == "4bit":
-            self.built_instance = BitsAndBytesConfig(load_in_4bit=True, **self.kwargs)
+            self.built_instance = BitsAndBytesConfig(load_in_4bit=True)
         
         elif self.load_in == "8bit":
-            self.built_instance = BitsAndBytesConfig(load_in_8bit=True, **self.kwargs)
+            self.built_instance = BitsAndBytesConfig(load_in_8bit=True)
 
     def definition(self):
         return {
@@ -164,28 +147,17 @@ class HfBitsAndBytesConfigWrapper:
             ]
         }
 
-    @classmethod
-    def from_definition(cls, load_in, **kwargs):
-        return cls(load_in=load_in, **kwargs)
-
                             
-class HfAutoModelForCasualLMWrapper:
-    def __init__(self, base_model_id: str, **kwargs) -> None:
+class HfAutoModelForCasualLMWrapper(WrapperMixin):
+    def __init__(self, quantization_config, *, base_model_id: str) -> None:
+        self.keys_to_compare = ["base_model_id", "quantization_config"]
         self.base_model_id = base_model_id
-        self.kwargs = kwargs
+        self.quantization_config = quantization_config
         
-    def __eq__(self, other):
-        if not isinstance(other, HfAutoModelForCasualLMWrapper):
-            return NotImplemented
-        return (self.base_model_id == other.base_model_id) and (self.kwargs == other.kwargs)
-
-    def __repr__(self) -> str:
-        return __class__.__name__.replace("Wrapper", "")
-
     def build(self):
         self.built_instance = AutoModelForCausalLM.from_pretrained(
             self.base_model_id,
-            **self.kwargs
+            quantization_config=self.quantization_config.built_instance
         )
 
     def definition(self):
@@ -197,33 +169,14 @@ class HfAutoModelForCasualLMWrapper:
             ]
         }
 
-    @classmethod
-    def from_definition(cls, base_model_id: str, **kwargs):
-        special_handlers = {
-            "quantization_config": lambda qc: qc.built_instance if hasattr(qc, 'built_instance') else qc
-        }
-        processed_kwargs = {}
-        for key, value in kwargs.items():
-            if key in special_handlers:
-                processed_kwargs[key] = special_handlers[key](value)
-        return cls(base_model_id=base_model_id, **processed_kwargs)
 
-class HfAutoTokenizerWrapper:
-    def __init__(self, base_model_id: str, **kwargs) -> None:
+class HfAutoTokenizerWrapper(WrapperMixin):
+    def __init__(self, *, base_model_id: str) -> None:
+        self.keys_to_compare = ["base_model_id"]
         self.base_model_id = base_model_id
-        self.kwargs = kwargs
-
-
-    def __eq__(self, other):
-        if not isinstance(other, HfAutoTokenizerWrapper):
-            return NotImplemented
-        return (self.base_model_id == other.base_model_id) and (self.kwargs == other.kwargs)
-
-    def __repr__(self) -> str:
-        return __class__.__name__.replace("Wrapper", "")
 
     def build(self):
-        self.built_instance = AutoTokenizer.from_pretrained(self.base_model_id, **self.kwargs)
+        self.built_instance = AutoTokenizer.from_pretrained(self.base_model_id)
 
     def definition(self):
         return {
@@ -233,13 +186,10 @@ class HfAutoTokenizerWrapper:
             ]
         }
 
-    @classmethod
-    def from_definition(cls, base_model_id, **kwargs):
-        return cls(base_model_id=base_model_id, **kwargs)
-
-
-class HfModelGeneratorWrapper:
-    def __init__(self, model, tokenizer, temperature, max_new_tokens, repetition_penalty, prompt) -> None:
+    
+class HfModelGeneratorWrapper(WrapperMixin):
+    def __init__(self, model, tokenizer, *, temperature, max_new_tokens, repetition_penalty, prompt) -> None:
+        self.keys_to_compare = ['model', 'tokenizer', 'temperature', 'max_new_tokens', 'repetition_penalty', 'prompt']
         self.model = model
         self.tokenizer = tokenizer
         self.temperature = temperature
@@ -247,26 +197,17 @@ class HfModelGeneratorWrapper:
         self.repetition_penalty = repetition_penalty
         self.prompt = prompt
 
-
-    def __eq__(self, other):
-        if not isinstance(other, TextGeneratorWrapper):
-            return NotImplemented
-        return (self.model == other.model) and (self.tokenizer == other.tokenizer)
-
-    def __repr__(self) -> str:
-        return __class__.__name__.replace("Wrapper", "")
-
     def __call__(self):
-        self.model.eval()
+        self.model.built_instance.eval()
         chat = [{"role": "user", "content": self.prompt}]
-        model_input = self.tokenizer.apply_chat_template(chat, return_tensors="pt").to("cuda")
+        model_input = self.tokenizer.built_instance.apply_chat_template(chat, return_tensors="pt").to("cuda")
         num_input_tokens = model_input.shape[1]
-        generated_tokens = self.model.generate(model_input, 
+        generated_tokens = self.model.built_instance.generate(model_input, 
                                                max_new_tokens=self.max_new_tokens, 
                                                repetition_penalty=1.15)
 
         output_tokens = generated_tokens[:, num_input_tokens:]
-        assistant_response = self.tokenizer.decode(output_tokens[0], skip_special_tokens=True)
+        assistant_response = self.tokenizer.built_instance.decode(output_tokens[0], skip_special_tokens=True)
 
         print(assistant_response)
 
@@ -287,40 +228,3 @@ class HfModelGeneratorWrapper:
                 {"name": "prompt", "type": "str", "required": True, "default": None, "is_property": True},
             ]
         }
-
-    @classmethod
-    def from_definition(cls, model, tokenizer, temperature, max_new_tokens, repetition_penalty, prompt):
-        return cls(model.built_instance, tokenizer.built_instance, temperature, max_new_tokens, repetition_penalty, prompt)
-
-class TextGeneratorWrapper:
-    def __init__(self, model, tokenizer) -> None:
-        self.model = model
-        self.tokenizer = tokenizer
-
-
-    def __eq__(self, other):
-        if not isinstance(other, TextGeneratorWrapper):
-            return NotImplemented
-        return (self.model == other.model) and (self.tokenizer == other.tokenizer)
-
-    def __repr__(self) -> str:
-        return __class__.__name__.replace("Wrapper", "")
-
-    def build(self):
-        self.built_instance = TextGenerator(self.model, self.tokenizer)
-
-    def __call__(self):
-        self.built_instance.talk_to()
-
-    def definition(self):
-        return {
-            "type": self.__repr__,
-            "fields": [
-                {"name": "model", "type": "HfAutoModelForCasualLM", "required": True, "default": None, "is_property": False},
-                {"name": "tokenizer", "type": "HfBitsAndBytesConfig", "required": True, "default": None, "is_property": False},
-            ]
-        }
-
-    @classmethod
-    def from_definition(cls, model, tokenizer):
-        return cls(model.built_instance, tokenizer.built_instance)
