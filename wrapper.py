@@ -235,7 +235,8 @@ class HfAutoModelForCasualLMWrapper(WrapperMixin):
     def build(self):
         self.built_instance = AutoModelForCausalLM.from_pretrained(
             self.base_model_id,
-            quantization_config=self.quantization_config.built_instance
+            quantization_config=self.quantization_config.built_instance,
+            device_map="auto",
         )
 
     @classmethod

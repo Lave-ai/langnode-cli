@@ -6,11 +6,7 @@
             {
                 "id": "tmp1",
                 "node_type": "ChatTemplate",
-                "properties": {
-                    "messages": [
-                        {"role": "user", "content": "hello my name is seungwoo. what is your name?"}
-                    ]
-                }
+                "properties": {}
             },
             {
                 "id": "bnb1",
@@ -38,8 +34,8 @@
                 "node_type": "HfModelGenerator",
                 "properties": {
                     "temperature": 0.0,
-                    "max_new_tokens": 1024,
-                    "repetition_penalty": 0.0
+                    "max_new_tokens": 10,
+                    "repetition_penalty": 4.0
                 }
             },
             {
@@ -55,7 +51,7 @@
                 "node_type": "GeminiGenerator",
                 "properties": {
                     "temperature": 0.0,
-                    "max_output_tokens": 1024
+                    "max_output_tokens": 30
                 }
             },
             {
@@ -71,14 +67,14 @@
                 "properties": {
                     "model_name": "gpt-4",
                     "temperature": 0.0,
-                    "max_tokens": 1024
+                    "max_tokens": 30
                 }
             },
             {
                 "id": "csv1",
                 "node_type": "CsvWriter",
                 "properties": {
-                    "csv_file_path": "./output.csv"
+                    "csv_file_path": "./output_topic_classification.csv"
                 }
             }
         ],
