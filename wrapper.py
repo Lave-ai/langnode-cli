@@ -2,6 +2,7 @@ from typing import Any
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from entities import TextGenerator
 import google.generativeai as genai
+import torch
 from openai import OpenAI
 
 class WrapperMixin:
@@ -134,10 +135,15 @@ class HfBitsAndBytesConfigWrapper(WrapperMixin):
 
     def build(self):
         if self.load_in == "4bit":
-            self.built_instance = BitsAndBytesConfig(load_in_4bit=True)
+            self.built_instance = BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_compute_dtype=torch.float16
+                )
         
         elif self.load_in == "8bit":
-            self.built_instance = BitsAndBytesConfig(load_in_8bit=True)
+            self.built_instance = BitsAndBytesConfig(
+                load_in_8bit=True)
 
     def definition(self):
         return {
@@ -200,7 +206,9 @@ class HfModelGeneratorWrapper(WrapperMixin):
     def __call__(self):
         self.model.built_instance.eval()
         chat = [{"role": "user", "content": self.prompt}]
-        model_input = self.tokenizer.built_instance.apply_chat_template(chat, return_tensors="pt").to("cuda")
+        model_input = self.tokenizer.built_instance.apply_chat_template(chat, 
+                                                                        return_tensors="pt",
+                                                                        add_generation_prompt=True).to("cuda")
         num_input_tokens = model_input.shape[1]
         generated_tokens = self.model.built_instance.generate(model_input, 
                                                max_new_tokens=self.max_new_tokens, 
