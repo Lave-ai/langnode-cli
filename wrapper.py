@@ -3,8 +3,14 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 import google.generativeai as genai
 import torch
 from openai import OpenAI
+import csv
+import os
 
 class WrapperMixin:
+    def __init__(self, built_instance) -> None:
+        self.keys_to_compare = ['built_instance']
+        self.built_instance = built_instance
+
     def __repr__(self) -> str:
         return __class__.__name__.replace("Wrapper", "")
 
@@ -15,6 +21,37 @@ class WrapperMixin:
         other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
 
         return self_dict_filtered == other_dict_filtered
+
+
+class CsvWriterWrapper(WrapperMixin):
+    def __init__(self, *, csv_file_path, **columnname__value) -> None:
+        self.keys_to_compare = ["csv_file_path"]
+        self.csv_file_path = csv_file_path
+        self.columnname__value = columnname__value
+
+    def build(self):
+        pass
+
+    def __call__(self) -> None:
+        file_exists = os.path.exists(self.csv_file_path) and os.path.getsize(self.csv_file_path) > 0
+
+        data_row = {key: value.built_instance for key, value in self.columnname__value.items()}
+
+        with open(self.csv_file_path, 'a' if file_exists else 'w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=self.columnname__value.keys())
+
+            if not file_exists:
+                writer.writeheader()
+
+            writer.writerow(data_row)
+
+    def definition(self):
+        return {
+            "type": self.__repr__,
+            "fields": [
+                {"name": "csv_file_path", "type": "str", "required": True, "default": None, "is_property": True},
+            ]
+        }
 
 
 class ChatTemplateWrapper(WrapperMixin):
@@ -55,8 +92,8 @@ class OpenaiCompeletionWrapper(WrapperMixin):
             max_tokens=self.max_tokens
         )
         print(chat_completion.choices[0].message.content)
-        return chat_completion.choices[0].message.content
-        
+        return WrapperMixin(chat_completion.choices[0].message.content)
+
     def build(self):
         pass
 
@@ -107,7 +144,7 @@ class GeminiGeneratorWrapper(WrapperMixin):
             "temperature": self.temperature,
         },)
         print(responses.text)
-        return responses.text
+        return WrapperMixin(responses.text)
 
     def to_gemini_chat_components(self):
         messages = []
@@ -246,7 +283,7 @@ class HfModelGeneratorWrapper(WrapperMixin):
 
         print(assistant_response)
 
-        return assistant_response
+        return WrapperMixin(assistant_response)
 
     def build(self):
         pass

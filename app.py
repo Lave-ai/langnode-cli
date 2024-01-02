@@ -30,26 +30,35 @@ def build_from_dict():
     for edge in parsed_json['data']['edges']:
         pipe_line.add_edge(**edge)
 
+    print("Visualize graph:")
     pipe_line.draw()
+    print("\n\n\n")
 
-    sorted_nodes = pipe_line.topological_sort()
     print("Topologically sorted nodes:")
+    sorted_nodes = pipe_line.topological_sort()
     for node in sorted_nodes:
         print(node.wrapper_class)
+    print("\n\n\n")
 
+    print("first loop")
     for node in sorted_nodes:
         print(node.wrapper_class)
         node.run()
+    print("\n\n\n")
 
+    print("second loop")
     for node in sorted_nodes:
         print(node.wrapper_class)
         node.run()
+    print("\n\n\n")
 
+    print("third loop")
     for node in sorted_nodes:
         print(node.wrapper_class)
         if node.wrapper_class is HfBitsAndBytesConfigWrapper:
             node.parameters["load_in"] = "8bit"
         node.run()
+    print("\n\n\n")
 
 
 def build(base_model_id):
