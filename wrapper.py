@@ -1,6 +1,5 @@
 from typing import Any
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-from entities import TextGenerator
 import google.generativeai as genai
 import torch
 from openai import OpenAI
@@ -18,8 +17,29 @@ class WrapperMixin:
         return self_dict_filtered == other_dict_filtered
 
 
+class ChatTemplateWrapper(WrapperMixin):
+    def __init__(self, *, messages) -> None:
+        self.keys_to_compare = ["messages"]
+        self.messages = messages
+
+    def build(self):
+        for m in self.messages:
+            assert "role" in m
+            assert "content" in m
+            assert m['role'] in ("user", "system", "assistant")
+
+        self.built_instance = self.messages
+
+    def definition(self):
+        return {
+            "type": self.__repr__,
+            "fields": [
+                {"name": "messages", "type": "array", "required": True, "default": None, "is_property": True},
+            ]
+        }
+
 class OpenaiCompeletionWrapper(WrapperMixin):
-    def __init__(self, client, *, model_name, max_tokens, temperature, prompt) -> None:
+    def __init__(self, client, prompt, *, model_name, max_tokens, temperature) -> None:
         self.keys_to_compare = ["client", "model_name", "max_tokens", "temperature", "prompt"]
         self.client = client
         self.model_name = model_name
@@ -29,12 +49,7 @@ class OpenaiCompeletionWrapper(WrapperMixin):
 
     def __call__(self) -> Any:
         chat_completion = self.client.built_instance.chat.completions.create(
-            messages=[
-                {
-                    "role": "user",
-                    "content": self.prompt,
-                }
-            ],
+            messages=self.prompt.built_instance,
             model=self.model_name,
             temperature=self.temperature,
             max_tokens=self.max_tokens
@@ -53,7 +68,7 @@ class OpenaiCompeletionWrapper(WrapperMixin):
                 {"name": "model_name", "type": "str", "required": True, "default": None, "is_property": True},
                 {"name": "max_tokens", "type": "int", "required": False, "default": 1024, "is_property": True},
                 {"name": "temperature", "type": "float", "required": False, "default": 0.0, "is_property": True},
-                {"name": "prompt", "type": "str", "required": True, "default": None, "is_property": True},
+                {"name": "prompt", "type": "ChatTemplate", "required": True, "default": None, "is_property": False},
             ]
         }
 
@@ -77,7 +92,7 @@ class OpenaiClientWrapper(WrapperMixin):
 
 
 class GeminiGeneratorWrapper(WrapperMixin):
-    def __init__(self, model, *, max_output_tokens, temperature, prompt) -> None:
+    def __init__(self, model, prompt, *, max_output_tokens, temperature) -> None:
         self.keys_to_compare = ["model", "max_output_tokens", "temperature", "prompt"]
         self.model = model
         self.max_output_tokens = max_output_tokens
@@ -85,13 +100,26 @@ class GeminiGeneratorWrapper(WrapperMixin):
         self.prompt = prompt
 
     def __call__(self) -> Any:
-        responses = self.model.built_instance.generate_content(self.prompt, 
+        responses = self.model.built_instance.generate_content(
+            self.to_gemini_chat_components(), 
         generation_config={
             "max_output_tokens": self.max_output_tokens,
             "temperature": self.temperature,
         },)
         print(responses.text)
         return responses.text
+
+    def to_gemini_chat_components(self):
+        messages = []
+        for p in self.prompt.built_instance:
+            if p["role"] == "user":
+                role = "user"
+            elif p["role"] == "assistant":
+                role = "model"
+            else:
+                role = "user"
+            messages.append({"role": role, "parts": [p["content"]]})
+        return messages
 
     def build(self):
         pass
@@ -103,7 +131,7 @@ class GeminiGeneratorWrapper(WrapperMixin):
                 {"name": "model", "type": "GeminiModel", "required": True, "default": None, "is_property": False},
                 {"name": "max_output_tokens", "type": "int", "required": False, "default": 1024, "is_property": True},
                 {"name": "temperature", "type": "float", "required": False, "default": 0.0, "is_property": True},
-                {"name": "prompt", "type": "str", "required": True, "default": None, "is_property": True},
+                {"name": "prompt", "type": "ChatTemplate", "required": True, "default": None, "is_property": False},
             ]
         }
 
@@ -194,7 +222,7 @@ class HfAutoTokenizerWrapper(WrapperMixin):
 
     
 class HfModelGeneratorWrapper(WrapperMixin):
-    def __init__(self, model, tokenizer, *, temperature, max_new_tokens, repetition_penalty, prompt) -> None:
+    def __init__(self, model, tokenizer, prompt, *, temperature, max_new_tokens, repetition_penalty) -> None:
         self.keys_to_compare = ['model', 'tokenizer', 'temperature', 'max_new_tokens', 'repetition_penalty', 'prompt']
         self.model = model
         self.tokenizer = tokenizer
@@ -205,8 +233,7 @@ class HfModelGeneratorWrapper(WrapperMixin):
 
     def __call__(self):
         self.model.built_instance.eval()
-        chat = [{"role": "user", "content": self.prompt}]
-        model_input = self.tokenizer.built_instance.apply_chat_template(chat, 
+        model_input = self.tokenizer.built_instance.apply_chat_template(self.prompt.built_instance, 
                                                                         return_tensors="pt",
                                                                         add_generation_prompt=True).to("cuda")
         num_input_tokens = model_input.shape[1]
@@ -233,6 +260,6 @@ class HfModelGeneratorWrapper(WrapperMixin):
                 {"name": "temperature", "type": "float", "required": False, "default": 0.0, "is_property": True},
                 {"name": "max_new_tokens", "type": "int", "required": False, "default": 1024, "is_property": True},
                 {"name": "repetition_penalty", "type": "float", "required": False, "default": 0.0, "is_property": True},
-                {"name": "prompt", "type": "str", "required": True, "default": None, "is_property": True},
+                {"name": "prompt", "type": "ChatTemplate", "required": True, "default": None, "is_property": False},
             ]
         }
