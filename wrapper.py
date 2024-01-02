@@ -45,9 +45,10 @@ class CsvWriterWrapper(WrapperMixin):
 
             writer.writerow(data_row)
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "csv_file_path", "type": "str", "required": True, "default": None, "is_property": True},
             ]
@@ -67,9 +68,10 @@ class ChatTemplateWrapper(WrapperMixin):
 
         self.built_instance = self.messages
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "messages", "type": "array", "required": True, "default": None, "is_property": True},
             ]
@@ -97,9 +99,10 @@ class OpenaiCompeletionWrapper(WrapperMixin):
     def build(self):
         pass
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "client", "type": "OpenaiClient", "required": True, "default": None, "is_property": False},
                 {"name": "model_name", "type": "str", "required": True, "default": None, "is_property": True},
@@ -119,9 +122,10 @@ class OpenaiClientWrapper(WrapperMixin):
         self.built_instance = OpenAI(
             api_key=self.api_key)
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "api_key", "type": "str", "required": True, "default": None, "is_property": True},
             ]
@@ -161,9 +165,10 @@ class GeminiGeneratorWrapper(WrapperMixin):
     def build(self):
         pass
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "model", "type": "GeminiModel", "required": True, "default": None, "is_property": False},
                 {"name": "max_output_tokens", "type": "int", "required": False, "default": 1024, "is_property": True},
@@ -183,9 +188,10 @@ class GeminiModelWrapper(WrapperMixin):
         genai.configure(api_key=self.api_key)
         self.built_instance = genai.GenerativeModel(self.model_name)
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "model_name", "type": "str", "required": True, "default": None, "is_property": True},
                 {"name": "api_key", "type": "str", "required": True, "default": None, "is_property": True},
@@ -210,9 +216,10 @@ class HfBitsAndBytesConfigWrapper(WrapperMixin):
             self.built_instance = BitsAndBytesConfig(
                 load_in_8bit=True)
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "load_in", "type": "enum", "enum_values": ["4bit", "8bit"], "required": True, "default": "4bit", "is_property": True},
             ]
@@ -231,9 +238,10 @@ class HfAutoModelForCasualLMWrapper(WrapperMixin):
             quantization_config=self.quantization_config.built_instance
         )
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "base_model_id", "type": "str", "required": True, "default": None, "is_property": True},
                 {"name": "quantization_config", "type": "HfBitsAndBytesConfig", "required": True, "default": None, "is_property": False},
@@ -249,9 +257,10 @@ class HfAutoTokenizerWrapper(WrapperMixin):
     def build(self):
         self.built_instance = AutoTokenizer.from_pretrained(self.base_model_id)
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "base_model_id", "type": "str", "required": True, "default": None, "is_property": True}
             ]
@@ -288,9 +297,10 @@ class HfModelGeneratorWrapper(WrapperMixin):
     def build(self):
         pass
 
-    def definition(self):
+    @classmethod
+    def definition(cls):
         return {
-            "type": self.__repr__,
+            "type": cls.__name__.replace("Wrapper", ""),
             "fields": [
                 {"name": "model", "type": "HfAutoModelForCasualLM", "required": True, "default": None, "is_property": False},
                 {"name": "tokenizer", "type": "HfBitsAndBytesConfig", "required": True, "default": None, "is_property": False},
