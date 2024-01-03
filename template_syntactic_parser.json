@@ -42,7 +42,7 @@
                 "id": "gm1",
                 "node_type": "GeminiModel",
                 "properties": {
-                    "api_key": "AIzaSyBVKgGmeyytRI9ASbtxkwHqpCuJTi__-VU",
+                    "api_key": "",
                     "model_name": "gemini-pro"
                 }
             },
@@ -58,7 +58,7 @@
                 "id": "oc1",
                 "node_type": "OpenaiClient",
                 "properties": {
-                    "api_key": "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"
+                    "api_key": ""
                 }
             },
             {

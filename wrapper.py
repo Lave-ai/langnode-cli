@@ -116,7 +116,7 @@ class OpenaiCompeletionWrapper(WrapperMixin):
 class OpenaiClientWrapper(WrapperMixin):
     def __init__(self, *, api_key) -> None:
         self.keys_to_compare = ["api_key"]
-        self.api_key = api_key
+        self.api_key = api_key if api_key else os.environ.get('LANGNODE_OPENAI_API_KEY')
 
     def build(self):
         self.built_instance = OpenAI(
@@ -142,7 +142,7 @@ class GeminiGeneratorWrapper(WrapperMixin):
 
     def __call__(self) -> Any:
         responses = self.model.built_instance.generate_content(
-            self.to_gemini_chat_components(), 
+            self.to_gemini_chat_components(),
         generation_config={
             "max_output_tokens": self.max_output_tokens,
             "temperature": self.temperature,
@@ -182,7 +182,7 @@ class GeminiModelWrapper(WrapperMixin):
     def __init__(self, *, model_name, api_key) -> None:
         self.keys_to_compare = ["model_name", "api_key"]
         self.model_name = model_name
-        self.api_key = api_key
+        self.api_key = api_key if api_key else os.environ.get('LANGNODE_GEMINI_API_KEY')
 
     def build(self):
         genai.configure(api_key=self.api_key)
@@ -211,7 +211,7 @@ class HfBitsAndBytesConfigWrapper(WrapperMixin):
                 bnb_4bit_use_double_quant=True,
                 bnb_4bit_compute_dtype=torch.float16
                 )
-        
+
         elif self.load_in == "8bit":
             self.built_instance = BitsAndBytesConfig(
                 load_in_8bit=True)
@@ -225,13 +225,13 @@ class HfBitsAndBytesConfigWrapper(WrapperMixin):
             ]
         }
 
-                            
+
 class HfAutoModelForCasualLMWrapper(WrapperMixin):
     def __init__(self, quantization_config, *, base_model_id: str) -> None:
         self.keys_to_compare = ["base_model_id", "quantization_config"]
         self.base_model_id = base_model_id
         self.quantization_config = quantization_config
-        
+
     def build(self):
         self.built_instance = AutoModelForCausalLM.from_pretrained(
             self.base_model_id,
@@ -267,7 +267,7 @@ class HfAutoTokenizerWrapper(WrapperMixin):
             ]
         }
 
-    
+
 class HfModelGeneratorWrapper(WrapperMixin):
     def __init__(self, model, tokenizer, prompt, *, temperature, max_new_tokens, repetition_penalty) -> None:
         self.keys_to_compare = ['model', 'tokenizer', 'temperature', 'max_new_tokens', 'repetition_penalty', 'prompt']
@@ -280,12 +280,12 @@ class HfModelGeneratorWrapper(WrapperMixin):
 
     def __call__(self):
         self.model.built_instance.eval()
-        model_input = self.tokenizer.built_instance.apply_chat_template(self.prompt.built_instance, 
+        model_input = self.tokenizer.built_instance.apply_chat_template(self.prompt.built_instance,
                                                                         return_tensors="pt",
                                                                         add_generation_prompt=True).to("cuda")
         num_input_tokens = model_input.shape[1]
-        generated_tokens = self.model.built_instance.generate(model_input, 
-                                               max_new_tokens=self.max_new_tokens, 
+        generated_tokens = self.model.built_instance.generate(model_input,
+                                               max_new_tokens=self.max_new_tokens,
                                                repetition_penalty=1.15)
 
         output_tokens = generated_tokens[:, num_input_tokens:]
