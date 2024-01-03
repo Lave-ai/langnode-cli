@@ -34,7 +34,7 @@
                 "node_type": "HfModelGenerator",
                 "properties": {
                     "temperature": 0.0,
-                    "max_new_tokens": 10,
+                    "max_new_tokens": 2048,
                     "repetition_penalty": 4.0
                 }
             },
@@ -51,14 +51,14 @@
                 "node_type": "GeminiGenerator",
                 "properties": {
                     "temperature": 0.0,
-                    "max_output_tokens": 30
+                    "max_output_tokens": 2048
                 }
             },
             {
                 "id": "oc1",
                 "node_type": "OpenaiClient",
                 "properties": {
-                    "api_key": "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"
+                    "api_key": "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"
                 }
             },
             {
@@ -67,7 +67,7 @@
                 "properties": {
                     "model_name": "gpt-4",
                     "temperature": 0.0,
-                    "max_tokens": 30
+                    "max_tokens": 2048
                 }
             },
             {
