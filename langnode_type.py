@@ -1,5 +1,5 @@
-
 from openai import OpenAI
+
 
 class LangNodeType:
     pass
@@ -8,8 +8,10 @@ class LangNodeType:
 class PrimitiveType(LangNodeType):
     pass
 
+
 class ModelType(LangNodeType):
     pass
+
 
 class StringType(PrimitiveType):
     def __init__(self, data: str) -> None:
@@ -19,7 +21,7 @@ class StringType(PrimitiveType):
     def __getattr__(self, name):
         return getattr(self.data, name)
 
-    
+
 class OpenAIClientType(ModelType):
     def __init__(self, api_key) -> None:
         super().__init__()
@@ -36,5 +38,3 @@ class OpenAIClientType(ModelType):
         other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
 
         return self_dict_filtered == other_dict_filtered
-
-    

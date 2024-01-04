@@ -1,5 +1,6 @@
 from copy import copy
 
+
 class Node:
     def __init__(self, id: str):
         self.id = id
@@ -25,6 +26,7 @@ class Node:
     def add_edge(self, edge):
         if edge not in self.edges:
             self.edges.append(edge)
+
 
 class Edge:
     def __init__(self, source: Node, target: Node, target_param_name: str):
@@ -64,7 +66,7 @@ class Pipeline:
         for edge in node.edges:
             if edge.target not in visited:
                 self.topological_sort_util(edge.target, visited, stack)
-        stack.insert(0, node)  
+        stack.insert(0, node)
 
     def topological_sort(self):
         visited = set()
