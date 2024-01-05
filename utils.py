@@ -20,12 +20,12 @@ ascii_art = """
 
 import inspect
 import json
-import wrapper
+import node_type
 
-def list_classes_in_module():
+def list_classes_in_module(module):
    class_list = []
-   for name, obj in inspect.getmembers(wrapper):
-      if inspect.isclass(obj) and obj.__module__ == wrapper.__name__:
+   for name, obj in inspect.getmembers(module):
+      if inspect.isclass(obj) and obj.__module__ == module.__name__:
          class_list.append(obj)
    to_dict = []
    for c in class_list:
@@ -40,4 +40,4 @@ def list_classes_in_module():
 
 
 if __name__ == "__main__":
-   list_classes_in_module()
+   list_classes_in_module(node_type)
