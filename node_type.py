@@ -34,7 +34,7 @@ class BitsAndBytesConfigNode(Node):
                         "type": "StringType",
                     }
                 ],
-                "output": {"type": "BnBConfigType"},
+                "output": [{"name": "bnbconfig", "type": "BnBConfigType"}],
             },
         }
 
@@ -59,7 +59,7 @@ class HfAutoTokenizerNode(Node):
                         "type": "StringType",
                     }
                 ],
-                "output": {"type": "HfAutoTokenizerType"},
+                "output": [{"name": "hftokenizer", "type": "HfAutoTokenizerType"}],
             },
         }
 
@@ -94,7 +94,7 @@ class HfAutoModelForCasualLMNode(Node):
                         "type": "StringType",
                     }
                 ],
-                "output": {"type": "HfAutoModelForCasualLMType"},
+                "output": [{"name": "hfmodel", "type": "HfAutoModelForCasualLMType"}],
             },
         }
 
@@ -180,7 +180,7 @@ class HfModelGeneratorNode(Node):
                         "type": "FloatType",
                     },
                 ],
-                "output": {"type": "StringType"},
+                "output": [{"name": "model_response", "type": "StringType"}],
             },
         }
 
@@ -209,7 +209,7 @@ class ChatTemplateNode(Node):
                         "type": "MessagesType",
                     }
                 ],
-                "output": {"type": "MessagesType"},
+                "output": [{"name": "messages", "type": "MessagesType"}],
             },
         }
 
@@ -245,7 +245,7 @@ class GeminiModelNode(Node):
                         "type": "StringType",
                     },
                 ],
-                "output": {"type": "GeminiModelType"},
+                "output": [{"name": "gemini_model", "type": "GeminiModelType"}],
             },
         }
 
@@ -311,7 +311,7 @@ class GeminiGeneratorNode(Node):
                         "type": "MessagesType",
                     },
                 ],
-                "output": {"type": "StringType"},
+                "output": [{"name": "model_response", "type": "StringType"}],
             },
         }
 
@@ -342,7 +342,7 @@ class OpenaiClientNode(Node):
                         "type": "StringType",
                     }
                 ],
-                "output": {"type": "OpenAIClientType"},
+                "output": [{"name": "openai_client", "type": "OpenAIClientType"}],
             },
         }
 
@@ -411,6 +411,6 @@ class OpenaiCompeletionNode(Node):
                         "type": "FloatType",
                     },
                 ],
-                "output": {"type": "StringType"},
+                "output": [{"name": "model_response", "type": "StringType"}],
             },
         }
