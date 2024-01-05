@@ -6,7 +6,39 @@ import torch
 
 
 class DataType:
-    pass
+    # def __eq__(self, other):
+    #     if not isinstance(other, self.__class__):
+    #         return NotImplemented
+
+    #     self_dict_filtered = {key: self.__dict__[key] for key in self.keys_to_compare}
+    #     other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
+    #     print(self_dict_filtered)
+    #     print(other_dict_filtered)
+    #     if self_dict_filtered == other_dict_filtered:
+    #         print(self.__class__.__name__, " __eq__ ", other.__class__.__name__)
+    #         print("is same")
+        
+    #     else:
+    #         print(self.__class__.__name__, " __eq__ ", other.__class__.__name__)
+    #         print("is different")
+
+    #     return self_dict_filtered == other_dict_filtered
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return NotImplemented
+
+        # Assuming self.keys_to_compare is a list of keys to compare
+        for key in self.keys_to_compare:
+            if self.__dict__[key] != other.__dict__[key]:
+                print(self.__class__.__name__, " __eq__ ", other.__class__.__name__)
+                print("is different")
+                return False
+
+        # If the loop completes without returning False, all values are the same
+        print(self.__class__.__name__, " __eq__ ", other.__class__.__name__)
+        print("is same")
+        return True
 
 
 class PrimitiveType(DataType):
@@ -18,150 +50,141 @@ class ModelType(DataType):
 
 
 class MessagesType(PrimitiveType):
+    keys_to_compare = ["_data"]
+
     def __init__(self, data: List[Dict[str, str]]) -> None:
         super().__init__()
-        self.data = data
+        self._data = data
 
-    def __getattr__(self, name):
-        return getattr(self.data, name)
+    @property
+    def data(self):
+        return self._data
 
 
 class StringType(PrimitiveType):
+    keys_to_compare = ["_data"]
+
     def __init__(self, data: str) -> None:
         super().__init__()
-        self.data = data
+        self._data = data
 
-    def __getattr__(self, name):
-        return getattr(self.data, name)
+    @property
+    def data(self):
+        return self._data
 
 
 class IntType(PrimitiveType):
+    keys_to_compare = ["_data"]
+
     def __init__(self, data: int) -> None:
         super().__init__()
-        self.data = data
+        self._data = data
 
-    def __getattr__(self, name):
-        return getattr(self.data, name)
+    @property
+    def data(self):
+        return self._data
 
 
 class FloatType(PrimitiveType):
+    keys_to_compare = ["_data"]
+
     def __init__(self, data: float) -> None:
         super().__init__()
-        self.data = data
+        self._data = data
 
-    def __getattr__(self, name):
-        return getattr(self.data, name)
+    @property
+    def data(self):
+        return self._data
 
 
 class OpenAIClientType(ModelType):
+    keys_to_compare = ["api_key"]
+
     def __init__(self, api_key: StringType) -> None:
         super().__init__()
-        self.keys_to_compare = ["api_key"]
         self.api_key = api_key
-        self.data = OpenAI(api_key=api_key.data)
+        self._data = None
 
-    def __getattr__(self, name):
-        return getattr(self.data, name)
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        self_dict_filtered = {key: self.__dict__[key] for key in self.keys_to_compare}
-        other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
-
-        return self_dict_filtered == other_dict_filtered
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = OpenAI(api_key=self.api_key.data)
+        return self._data
 
 
 class GeminiModelType(ModelType):
+    keys_to_compare = ["model_name", "api_key"]
+
     def __init__(self, model_name: StringType, api_key: StringType) -> None:
         super().__init__()
-        self.keys_to_compare = ["model_name", "api_key"]
         self.model_name = model_name
         self.api_key = api_key
+        self._data = None
 
-        genai.configure(api_key=self.api_key.data)
-        self.data = genai.GenerativeModel(self.model_name.data)
-
-    def __getattr__(self, name):
-        return getattr(self.data, name)
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        self_dict_filtered = {key: self.__dict__[key] for key in self.keys_to_compare}
-        other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
-
-        return self_dict_filtered == other_dict_filtered
+    @property
+    def data(self):
+        if self._data is None:
+            genai.configure(api_key=self.api_key.data)
+            self._data = genai.GenerativeModel(self.model_name.data)
+        return self._data
 
 
 class BnBConfigType(ModelType):
+    keys_to_compare = ["load_in"]
+
     def __init__(self, load_in: StringType) -> None:
         super().__init__()
-        self.keys_to_compare = ["load_in"]
         self.load_in = load_in
+        self._data = None
 
-        if self.load_in.data == "4bit":
-            self.data = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_use_double_quant=True,
-                bnb_4bit_compute_dtype=torch.float16,
-            )
+    @property
+    def data(self):
+        if self._data is None:
+            if self.load_in.data == "4bit":
+                self._data = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_compute_dtype=torch.float16,
+                )
 
-        elif self.load_in.data == "8bit":
-            self.data = BitsAndBytesConfig(load_in_8bit=True)
+            elif self.load_in.data == "8bit":
+                self._data = BitsAndBytesConfig(load_in_8bit=True)
 
-    def __getattr__(self, name):
-        return getattr(self.data, name)
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        self_dict_filtered = {key: self.__dict__[key] for key in self.keys_to_compare}
-        other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
-
-        return self_dict_filtered == other_dict_filtered
+        return self._data
 
 
 class HfAutoModelForCasualLMType(ModelType):
+    keys_to_compare = ["base_model_id", "quantization_config"]
+
     def __init__(
         self, *, quantization_config: BnBConfigType, base_model_id: StringType
     ) -> None:
         super().__init__()
-        self.keys_to_compare = ["base_model_id", "quantization_config"]
         self.base_model_id = base_model_id
         self.quantization_config = quantization_config
-        self.data = AutoModelForCausalLM.from_pretrained(
-            self.base_model_id.data,
-            quantization_config=self.quantization_config.data,
-            device_map="auto",
-        )
+        self._data = None
 
-    def __getattr__(self, name):
-        return getattr(self.data, name)
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        self_dict_filtered = {key: self.__dict__[key] for key in self.keys_to_compare}
-        other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
-
-        return self_dict_filtered == other_dict_filtered
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = AutoModelForCausalLM.from_pretrained(
+                self.base_model_id.data,
+                quantization_config=self.quantization_config.data,
+                device_map="auto",
+            )
+        return self._data
 
 
 class HfAutoTokenizerType(ModelType):
+    keys_to_compare = ["base_model_id"]
+
     def __init__(self, *, base_model_id: StringType) -> None:
         super().__init__()
-        self.keys_to_compare = ["base_model_id"]
         self.base_model_id = base_model_id
-        self.data = AutoTokenizer.from_pretrained(self.base_model_id.data)
+        self._data = None
 
-    def __getattr__(self, name):
-        return getattr(self.data, name)
-
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return NotImplemented
-        self_dict_filtered = {key: self.__dict__[key] for key in self.keys_to_compare}
-        other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
-
-        return self_dict_filtered == other_dict_filtered
+    @property
+    def data(self):
+        if self._data is None:
+            self._data = AutoTokenizer.from_pretrained(self.base_model_id.data)
+        return self._data

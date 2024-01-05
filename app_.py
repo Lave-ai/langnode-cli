@@ -1,3 +1,7 @@
+from copy import copy
+from rich import print
+import warnings
+from transformers.utils.logging import set_verbosity_error, disable_progress_bar
 import json
 import node_type
 import datatype
@@ -15,6 +19,44 @@ from node_type import (
     GeminiGeneratorNode,
 )
 from pipeline import Pipeline
+
+
+def test():
+    pipe_line = Pipeline(id="test")
+
+    op1 = (OpenaiClientNode("op1", api_key=StringType("")),)
+    oc1 = OpenaiCompeletionNode(
+        "opc1",
+        model_name=StringType("gpt-4"),
+        max_tokens=IntType(100),
+        temperature=FloatType(0.1),
+    )
+
+    print(oc1.parameters)
+    oc1.parameters.update(
+        {"client": op1, "messages": MessagesType([{"role": "user", "content": "hello"}])}
+    )
+    print("original")
+    print(oc1.parameters)
+    print(hex(id(oc1.parameters)))
+
+    oc1.previous_parameters = copy(oc1.parameters)
+    print("copied")
+    print(oc1.previous_parameters)
+    print(hex(id(oc1.previous_parameters)))
+
+    oc1.parameters.update({"messages": MessagesType([{"role": "user", "content": "bye"}])})
+
+    print("original")
+    print(oc1.parameters)
+
+
+    print("copied")
+    print(oc1.previous_parameters)
+
+    print(oc1.parameters['messages'] == oc1.previous_parameters['messages'])
+
+    oc1.parameters['messages'] == oc1.previous_parameters['messages']
 
 
 def main():
@@ -88,7 +130,14 @@ def main():
     print("\n\n\n")
 
     for node in sorted_nodes:
-        print(node)
+        print("running:  ", node)
+        node.run()
+
+
+    for node in sorted_nodes:
+        print("running:  ", node)
+        if node.__class__ is BitsAndBytesConfigNode:
+            node.parameters.update({"load_in": StringType("8bit")})
         node.run()
 
 
@@ -137,5 +186,12 @@ def from_json():
 
 
 if __name__ == "__main__":
-    # main()
-    from_json()
+
+    warnings.filterwarnings('ignore', category=FutureWarning)
+
+    set_verbosity_error()
+    disable_progress_bar()
+    # from_json()
+    # test()
+
+    main()

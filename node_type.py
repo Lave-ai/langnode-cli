@@ -373,7 +373,7 @@ class OpenaiCompeletionNode(Node):
         max_tokens: IntType,
         temperature: FloatType,
     ) -> StringType:
-        chat_completion = client.chat.completions.create(
+        chat_completion = client.data.chat.completions.create(
             messages=messages.data,
             model=model_name.data,
             temperature=temperature.data,
