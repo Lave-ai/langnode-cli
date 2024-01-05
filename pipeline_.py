@@ -36,7 +36,8 @@ class Edge:
 
 
 class Pipeline:
-    def __init__(self):
+    def __init__(self, id: str):
+        self.id = id
         self.nodes = []
         self.edges = []
 
