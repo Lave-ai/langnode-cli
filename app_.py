@@ -14,7 +14,7 @@ from node_type import (
     GeminiModelNode,
     GeminiGeneratorNode,
 )
-from pipeline_ import Pipeline
+from pipeline import Pipeline
 
 
 def main():
@@ -100,7 +100,7 @@ def get_props_type_from_node_definition(node_type_name: str, props_name: str):
 
 
 def from_json():
-    with open("pipeline_0105.json") as f:
+    with open("_data/pipeline_0105.json") as f:
         parsed_json = json.load(f)
 
     pipe_line = Pipeline(id="test")

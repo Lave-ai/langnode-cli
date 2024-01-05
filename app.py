@@ -11,7 +11,6 @@ from rich.table import Table
 
 import database as db
 from pipeline import Pipeline, Node
-from wrapper import HfBitsAndBytesConfigWrapper, ChatTemplateWrapper
 from tqdm import tqdm
 
 

@@ -11,7 +11,7 @@ from datatype import (
     StringType,
     BnBConfigType,
 )
-from pipeline_ import Node
+from pipeline import Node
 
 
 class BitsAndBytesConfigNode(Node):
