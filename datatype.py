@@ -6,38 +6,12 @@ import torch
 
 
 class DataType:
-    # def __eq__(self, other):
-    #     if not isinstance(other, self.__class__):
-    #         return NotImplemented
-
-    #     self_dict_filtered = {key: self.__dict__[key] for key in self.keys_to_compare}
-    #     other_dict_filtered = {key: other.__dict__[key] for key in self.keys_to_compare}
-    #     print(self_dict_filtered)
-    #     print(other_dict_filtered)
-    #     if self_dict_filtered == other_dict_filtered:
-    #         print(self.__class__.__name__, " __eq__ ", other.__class__.__name__)
-    #         print("is same")
-        
-    #     else:
-    #         print(self.__class__.__name__, " __eq__ ", other.__class__.__name__)
-    #         print("is different")
-
-    #     return self_dict_filtered == other_dict_filtered
-
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
             return NotImplemented
-
-        # Assuming self.keys_to_compare is a list of keys to compare
         for key in self.keys_to_compare:
             if self.__dict__[key] != other.__dict__[key]:
-                print(self.__class__.__name__, " __eq__ ", other.__class__.__name__)
-                print("is different")
                 return False
-
-        # If the loop completes without returning False, all values are the same
-        print(self.__class__.__name__, " __eq__ ", other.__class__.__name__)
-        print("is same")
         return True
 
 
