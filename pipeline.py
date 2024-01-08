@@ -1,35 +1,27 @@
 from copy import copy
-import wrapper
+
 
 class Node:
-    def __init__(self, id, node_type, properties: dict):
+    def __init__(self, id: str):
         self.id = id
-        self.wrapper_class = getattr(wrapper, node_type + "Wrapper") 
-        self.wrapper = None
-        self.parameters = {**properties}
-        self.previous_parameters = None
+        self.parameters = {}
+        self.previous_parameters = {}
+        self.output = None
         self.edges = []
-    
-    def __repr__(self) -> str:
-        return str(self.wrapper_class)
 
-    def forward_pass(self, value: "Wrapper"):
+    def forward_pass(self, value):
         for edge in self.edges:
             if edge.source == self:
                 edge.target.parameters.update({edge.target_param_name: value})
 
     def run(self):
-        if self.wrapper is None or self.previous_parameters != self.parameters:
-            self.wrapper = self.wrapper_class(**self.parameters)
-            self.wrapper.build()
-
+        if self.previous_parameters != self.parameters:
+            self.output = self._run(**self.parameters)
         self.previous_parameters = copy(self.parameters)
+        self.forward_pass(self.output)
 
-        if callable(self.wrapper):
-            result = self.wrapper()
-            self.forward_pass(result)
-        else:
-            self.forward_pass(self.wrapper)
+    def _run(self):
+        raise NotImplementedError
 
     def add_edge(self, edge):
         if edge not in self.edges:
@@ -37,28 +29,29 @@ class Node:
 
 
 class Edge:
-    def __init__(self, source, target, target_param_name):
+    def __init__(self, source: Node, target: Node, target_param_name: str):
         self.source = source
         self.target = target
         self.target_param_name = target_param_name
 
 
 class Pipeline:
-    def __init__(self):
+    def __init__(self, id: str):
+        self.id = id
         self.nodes = []
         self.edges = []
 
-    def add_node(self, node):
+    def add_node(self, node: Node):
         if node not in self.nodes:
             self.nodes.append(node)
 
-    def find_node_by_id(self, node_id):
+    def find_node_by_id(self, node_id: str):
         for node in self.nodes:
             if node.id == node_id:
                 return node
         return None
 
-    def add_edge(self, source_id, target_id, target_param_name):
+    def add_edge(self, source_id: str, target_id: str, target_param_name: str):
         source_node = self.find_node_by_id(source_id)
         target_node = self.find_node_by_id(target_id)
 
@@ -69,12 +62,12 @@ class Pipeline:
                 source_node.add_edge(edge)
                 target_node.add_edge(edge)
 
-    def topological_sort_util(self, node, visited, stack):
+    def topological_sort_util(self, node: Node, visited: set, stack: list):
         visited.add(node)
         for edge in node.edges:
             if edge.target not in visited:
                 self.topological_sort_util(edge.target, visited, stack)
-        stack.insert(0, node)  
+        stack.insert(0, node)
 
     def topological_sort(self):
         visited = set()
@@ -89,7 +82,7 @@ class Pipeline:
     def draw(self):
         print("Pipeline Visualization:")
         for edge in self.edges:
-            print(f"{edge.source.wrapper_class} --> {edge.target}.{edge.target_param_name}")
+            print(f"{edge.source} --> {edge.target}.{edge.target_param_name}")
 
 
 def get_root_node(pipeline):
